@@ -19,7 +19,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod: 1209600
-      VisibilityTimeout: 300
+      VisibilityTimeout: 900
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 3
@@ -42,10 +42,11 @@ Resources:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       FunctionName: !Ref Lambda
-      BatchSize: 10
       EventSourceArn: !GetAtt Queue.Arn
       FunctionResponseTypes:
         - ReportBatchItemFailures
+      BatchSize: 20
+      MaximumBatchingWindowInSeconds: 5
       ScalingConfig:
         MaximumConcurrency: 100
 
@@ -88,4 +89,4 @@ Resources:
             Resource: !GetAtt Queue.Arn
           - Effect: Allow
             Action: s3:PutObject
-            Resource: !Sub "arn:aws:s3:::${BucketName}/{BucketPrefix}*"
+            Resource: !Sub "arn:aws:s3:::${BucketName}/${BucketPrefix}*"

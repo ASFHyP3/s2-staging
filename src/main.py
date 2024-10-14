@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import xml.etree.ElementTree as ET
@@ -45,25 +44,25 @@ def get_s2_path(scene_name: str) -> str:
     return f'{safe_url}/{file_path}'
 
 
-def fetch_scene(scene_name, bucket, bucket_prefix):
+def fetch_scene(scene_name, bucket_name, bucket_prefix):
     google_cloud_url = get_s2_path(scene_name)
     response = session.get(google_cloud_url, stream=True)
     response.raise_for_status()
 
     key = f'{bucket_prefix}{scene_name}_B08.jp2'
-    s3.upload_fileobj(response.raw, bucket, key)
+    s3.upload_fileobj(response.raw, bucket_name, key)
 
 
 def lambda_handler(event: dict, context: object) -> dict:
-    bucket = os.getenv('BUCKET')
+    bucket_name = os.getenv('BUCKET_NAME')
     bucket_prefix = os.getenv('BUCKET_PREFIX')
 
     batch_item_failures = []
     for record in event['Records']:
         try:
-            body = json.loads(record['body'])
-            scene = body['Message']
-            fetch_scene(scene, bucket, bucket_prefix)
+            scene = record['body']
+            print(f'Processing {scene}')
+            fetch_scene(scene, bucket_name, bucket_prefix)
         except Exception:
             log.exception(f'Could not process message {record["messageId"]}')
             batch_item_failures.append({'itemIdentifier': record['messageId']})
