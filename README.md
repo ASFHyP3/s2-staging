@@ -36,8 +36,20 @@ mamba env create -f environment.yml
 mamba activate s2-staging
 
 python -m pip install -r requirements.txt -t src/
-aws cloudformation package --template-file cloudformation.yml --s3-bucket myBucket --s3-prefix myPrefix --output-template-file packaged.yml
-aws cloudformation deploy --template-file packaged.yml --stack-name s2-staging --capabilities CAPABILITY_IAM --parameter-overrides BucketName=its-live-project BucketPrefix=s2-cache/
+aws cloudformation package \
+  --template-file cloudformation.yml \
+  --s3-bucket myBucket \
+  --s3-prefix myPrefix \
+  --output-template-file packaged.yml
+aws cloudformation deploy \
+  --template-file packaged.yml \
+  --stack-name s2-staging \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides BucketName=its-live-project BucketPrefix=s2-cache/
 
-aws sqs send-message --queue-url https://sqs.us-west-2.amazonaws.com/123456789012/s2-staging-Queue-MxuL1mLZVvUO --message-body S2A_MSIL1C_20231213T235751_N0510_R087_T51CWT_20231214T003659
+aws sqs send-message \
+  --queue-url https://sqs.us-west-2.amazonaws.com/123456789012/s2-staging-Queue-MxuL1mLZVvUO
+  --message-body S2A_MSIL1C_20231213T235751_N0510_R087_T51CWT_20231214T003659
 ```
+
+See [batch_sqs_submit.py](batch_sqs_submit.py) for an example of submitting many scenes using [sqs.send_message_batch](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sqs/client/send_message_batch.html).
