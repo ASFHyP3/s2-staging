@@ -1,0 +1,6 @@
+name: s2-staging
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -r requirements.txt

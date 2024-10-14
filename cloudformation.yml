@@ -1,0 +1,91 @@
+Parameters:
+
+  BucketName:
+    Type: String
+    Default: 'its-live-project'
+
+  BucketPrefix:
+    Type: String
+    Default: 's2-cache/'
+
+Resources:
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600
+
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 300
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 3
+
+  Lambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: src/
+      Handler: main.lambda_handler
+      MemorySize: 128
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: python3.12
+      Timeout: 900
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref BucketName
+          BUCKET_PREFIX: !Ref BucketPrefix
+
+  LambdaEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      FunctionName: !Ref Lambda
+      BatchSize: 10
+      EventSourceArn: !GetAtt Queue.Arn
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      ScalingConfig:
+        MaximumConcurrency: 100
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${Lambda}"
+      RetentionInDays: 90
+
+  LambdaRole:
+    Type: Custom::JplRole
+    Properties:
+      ServiceToken: !ImportValue Custom::JplRole::ServiceToken
+      Path: /account-managed/hyp3/
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Action: sts:AssumeRole
+          Principal:
+            Service: lambda.amazonaws.com
+          Effect: Allow
+      ManagedPolicyArns:
+        - !Ref LambdaPolicy
+
+  LambdaPolicy:
+    Type: Custom::JplPolicy
+    Properties:
+      ServiceToken: !ImportValue Custom::JplPolicy::ServiceToken
+      Path: /account-managed/hyp3/
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+          - Effect: Allow
+            Action: sqs:*
+            Resource: !GetAtt Queue.Arn
+          - Effect: Allow
+            Action: s3:PutObject
+            Resource: !Sub "arn:aws:s3:::${BucketName}/{BucketPrefix}*"
