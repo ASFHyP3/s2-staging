@@ -16,6 +16,7 @@ git clone git@github.com:ASFHyP3/s2-staging.git
 cd s2-staging
 mamba env create -f environment.yml
 mamba activate s2-staging
+cd src
 python
 ```
 
