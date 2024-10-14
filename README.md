@@ -22,7 +22,8 @@ python
 
 ```python
 from main import fetch_scene
-fetch_scene('S2B_MSIL1C_20240216T235509_N0510_R087_T51CWT_20240217T005730', 'myBucket', 'myPrefix/')
+fetch_scene('S2B_MSIL1C_20240216T235509_N0510_R087_T51CWT_20240217T005730',
+            'myBucket', 'myPrefix/')
 ```
 
 ## AWS Usage
@@ -48,7 +49,7 @@ aws cloudformation deploy \
   --parameter-overrides BucketName=its-live-project BucketPrefix=s2-cache/
 
 aws sqs send-message \
-  --queue-url https://sqs.us-west-2.amazonaws.com/123456789012/s2-staging-Queue-MxuL1mLZVvUO
+  --queue-url https://sqs.us-west-2.amazonaws.com/123456789012/s2-staging-Queue-MxuL1mLZVvUO \
   --message-body S2A_MSIL1C_20231213T235751_N0510_R087_T51CWT_20231214T003659
 ```
 
