@@ -20,7 +20,7 @@ def get_s2_safe_url(scene_name):
 
 def get_s2_manifest(safe_url: str):
     manifest_url = f'{safe_url}/manifest.safe'
-    response = requests.get(manifest_url)
+    response = session.get(manifest_url)
     response.raise_for_status()
     return response.text
 
