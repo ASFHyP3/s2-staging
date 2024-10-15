@@ -19,7 +19,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod: 1209600
-      VisibilityTimeout: 900
+      VisibilityTimeout: 300
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 3
@@ -32,7 +32,7 @@ Resources:
       MemorySize: 128
       Role: !GetAtt LambdaRole.Arn
       Runtime: python3.12
-      Timeout: 900
+      Timeout: 300
       Environment:
         Variables:
           BUCKET_NAME: !Ref BucketName
@@ -45,7 +45,7 @@ Resources:
       EventSourceArn: !GetAtt Queue.Arn
       FunctionResponseTypes:
         - ReportBatchItemFailures
-      BatchSize: 20
+      BatchSize: 10
       MaximumBatchingWindowInSeconds: 5
       ScalingConfig:
         MaximumConcurrency: 100
