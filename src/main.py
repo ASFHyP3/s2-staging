@@ -4,11 +4,13 @@ import xml.etree.ElementTree as ET
 
 import boto3
 import requests
+from boto3.s3.transfer import TransferConfig
 
 log = logging.getLogger('its_live_monitoring')
 log.setLevel(logging.INFO)
 
 s3 = boto3.client('s3')
+transfer_config = TransferConfig(multipart_threshold=52428800, multipart_chunksize=52428800)
 session = requests.Session()
 
 
@@ -50,7 +52,7 @@ def fetch_scene(scene_name, bucket_name, bucket_prefix):
     response.raise_for_status()
 
     key = f'{bucket_prefix}{scene_name}_B08.jp2'
-    s3.upload_fileobj(response.raw, bucket_name, key)
+    s3.upload_fileobj(response.raw, bucket_name, key, Config=transfer_config)
 
 
 def lambda_handler(event: dict, context: object) -> dict:
