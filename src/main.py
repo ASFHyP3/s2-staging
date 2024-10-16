@@ -1,17 +1,26 @@
 import logging
 import os
+import tempfile
 import xml.etree.ElementTree as ET
 
 import boto3
 import requests
-from boto3.s3.transfer import TransferConfig
 
 log = logging.getLogger('its_live_monitoring')
 log.setLevel(logging.INFO)
 
 s3 = boto3.client('s3')
-transfer_config = TransferConfig(multipart_threshold=52428800, multipart_chunksize=52428800)
-session = requests.Session()
+
+
+def download_file(url, download_path):
+    session = requests.Session()
+    with session.get(url, stream=True) as s:
+        s.raise_for_status()
+        with open(download_path, 'wb') as f:
+            for chunk in s.iter_content(chunk_size=8*1024*1024):
+                if chunk:
+                    f.write(chunk)
+    session.close()
 
 
 def get_s2_safe_url(scene_name):
@@ -22,7 +31,7 @@ def get_s2_safe_url(scene_name):
 
 def get_s2_manifest(safe_url: str):
     manifest_url = f'{safe_url}/manifest.safe'
-    response = session.get(manifest_url)
+    response = requests.get(manifest_url)
     response.raise_for_status()
     return response.text
 
@@ -48,11 +57,11 @@ def get_s2_path(scene_name: str) -> str:
 
 def fetch_scene(scene_name, bucket_name, bucket_prefix):
     google_cloud_url = get_s2_path(scene_name)
-    response = session.get(google_cloud_url, stream=True)
-    response.raise_for_status()
+    with tempfile.NamedTemporaryFile() as foo:
+        download_file(google_cloud_url, foo.name)
 
-    key = f'{bucket_prefix}{scene_name}_B08.jp2'
-    s3.upload_fileobj(response.raw, bucket_name, key, Config=transfer_config)
+        key = f'{bucket_prefix}{scene_name}_B08.jp2'
+        s3.upload_file(foo.name, bucket_name, key)
 
 
 def lambda_handler(event: dict, context: object) -> dict:
