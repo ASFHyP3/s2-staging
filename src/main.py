@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 
 import boto3
 import requests
+from boto3.s3.transfer import TransferConfig
 
 log = logging.getLogger('its_live_monitoring')
 log.setLevel(logging.INFO)
@@ -61,7 +62,8 @@ def fetch_scene(scene_name, bucket_name, bucket_prefix):
         download_file(google_cloud_url, foo.name)
 
         key = f'{bucket_prefix}{scene_name}_B08.jp2'
-        s3.upload_file(foo.name, bucket_name, key)
+        transfer_config = TransferConfig(multipart_threshold=150*1024*1024, multipart_chunksize=100*1024*1024)
+        s3.upload_file(foo.name, bucket_name, key, Config=transfer_config)
 
 
 def lambda_handler(event: dict, context: object) -> dict:
