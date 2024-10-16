@@ -7,7 +7,7 @@ import boto3
 import requests
 from boto3.s3.transfer import TransferConfig
 
-log = logging.getLogger('its_live_monitoring')
+log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 s3 = boto3.client('s3')
