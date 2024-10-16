@@ -48,7 +48,7 @@ Resources:
       BatchSize: 10
       MaximumBatchingWindowInSeconds: 5
       ScalingConfig:
-        MaximumConcurrency: 100
+        MaximumConcurrency: 500
 
   LambdaLogGroup:
     Type: AWS::Logs::LogGroup
